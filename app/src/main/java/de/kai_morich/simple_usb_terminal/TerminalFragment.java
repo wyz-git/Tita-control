@@ -44,12 +44,19 @@ import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.hoho.android.usbserial.util.XonXoffFilter;
+import org.eclipse.paho.client.mqttv3.MqttClient;  
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;  
+import org.eclipse.paho.client.mqttv3.MqttException;  
+import org.eclipse.paho.client.mqttv3.MqttMessage;  
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
+import android.net.Uri;
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -76,6 +83,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
+    private List<Byte> serialBuffer = new ArrayList<>();
+    private static final String MQTT_SERVER = "tcp://119.23.220.15:1883";  
+    private static final int MQTT_PORT = 1883;  
+    private static final String MQTT_TOPIC = "joy10";  
+    private MqttClient client;  
 
     public TerminalFragment() {
         mainLooper = new Handler(Looper.getMainLooper());
@@ -90,6 +102,39 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         };
     }
 
+    private void connectToMqttServer() {  
+        try { 
+            client = new MqttClient(MQTT_SERVER, "JavaSample",new MemoryPersistence());  
+            MqttConnectOptions connOpts = new MqttConnectOptions();  
+            connOpts.setCleanSession(true);  
+    
+            // client.connect(connOpts);  
+    
+            // 在这里可以继续使用 client 对象进行其他操作  
+    
+            try {  
+                client.connect(connOpts);    
+    
+                // 在这里可以继续使用 client 对象进行其他操作    
+    
+            } catch (MqttException e) {    
+                // 处理连接失败的情况    
+                status("MQTT 连接失败: " + e.getMessage());  
+                // 打印 MQTT 原因码（如果有的话）  
+                int reasonCode = e.getReasonCode();  
+                // if (reasonCode != 0) {  
+                    status("MQTT 原因码: " + reasonCode);  
+                // }  
+                // 可以打印堆栈跟踪以获取更多上下文  
+                e.printStackTrace();  
+                // 可以在这里添加重试逻辑，但请注意避免无限递归    
+            }    
+        } catch (Exception e) {  
+            // 处理其他类型的异常  
+            status("发生未知错误: " + e.getMessage());  
+        }  
+    }  
+
     /*
      * Lifecycle
      */
@@ -100,7 +145,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setRetainInstance(true);
         deviceId = getArguments().getInt("device");
         portNum = getArguments().getInt("port");
-        baudRate = getArguments().getInt("baud");
+        baudRate = getArguments().getInt("baud");  
     }
 
     @Override
@@ -114,6 +159,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onStart() {
         super.onStart();
+
         if(service != null)
             service.attach(this);
         else
@@ -161,6 +207,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder binder) {
+        connectToMqttServer();
         service = ((SerialService.SerialBinder) binder).getService();
         service.attach(this);
         if(initialStart && isResumed()) {
@@ -392,34 +439,78 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         updateSendBtn(controlLines.sendAllowed ? SendButtonState.Idle : SendButtonState.Disabled);
     }
 
+    public void publishMQTTMessage(byte[] message) throws MqttException {  
+        MqttMessage mqttMessage = new MqttMessage(message);  
+        mqttMessage.setQos(0); // 设置消息的服务质量  
+        client.publish(MQTT_TOPIC, mqttMessage);  
+        System.out.println("Message published");  
+    }
+
+    public void mqtt_receive(ArrayDeque<byte[]> datas) {  
+            while (!datas.isEmpty()) {  
+                byte[] newData = datas.poll(); // 取出队列中的一个数据块  
+                for (byte b : newData) {  
+                    serialBuffer.add((byte) b); // 添加到缓冲区  
+                }  
+    
+                // 查找并处理所有以0xc8开头的消息  
+                int index = 0;  
+                while (index < serialBuffer.size()) {  
+                    if (serialBuffer.get(index) == (byte) 0xc8 && serialBuffer.size() - index >= 26) {  
+                        // 提取消息  
+                        byte[] messageToSend = new byte[26];  
+                        for (int i = 0; i < 26; i++) {  
+                            messageToSend[i] = serialBuffer.get(index + i);  
+                        }  
+    
+                        // 假设你有一个函数来发布MQTT消息  
+                                        // 发布MQTT消息  
+                        try {  
+                            publishMQTTMessage(messageToSend);;  
+                        } catch (MqttException e) {  
+                            status("loss connection");
+                        } 
+                        // 移除已处理的消息  
+                        // serialBuffer = serialBuffer.subList(index + 26, serialBuffer.size()); 
+                        serialBuffer.subList(index, index + 26).clear(); 
+                        // index = 0; // 重置索引  
+                    } else {  
+                        index++;  
+                    }  
+                }  
+            }  
+    }  
+
     private void receive(ArrayDeque<byte[]> datas) {
-        SpannableStringBuilder spn = new SpannableStringBuilder();
-        for (byte[] data : datas) {
-            if (flowControlFilter != null)
-                data = flowControlFilter.filter(data);
-            if (hexEnabled) {
-                spn.append(TextUtil.toHexString(data)).append('\n');
-            } else {
-                String msg = new String(data);
-                if (newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
-                    // don't show CR as ^M if directly before LF
-                    msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
-                    // special handling if CR and LF come in separate fragments
-                    if (pendingNewline && msg.charAt(0) == '\n') {
-                        if(spn.length() >= 2) {
-                            spn.delete(spn.length() - 2, spn.length());
-                        } else {
-                            Editable edt = receiveText.getEditableText();
-                            if (edt != null && edt.length() >= 2)
-                                edt.delete(edt.length() - 2, edt.length());
-                        }
-                    }
-                    pendingNewline = msg.charAt(msg.length() - 1) == '\r';
-                }
-                spn.append(TextUtil.toCaretString(msg, newline.length() != 0));
-            }
-        }
-        receiveText.append(spn);
+        mqtt_receive(datas);
+        // return;
+        // SpannableStringBuilder spn = new SpannableStringBuilder();
+        // for (byte[] data : datas) {
+        //     if (flowControlFilter != null)
+        //         data = flowControlFilter.filter(data);
+        //     if (hexEnabled) {
+        //         spn.append(TextUtil.toHexString(data)).append('\n');
+        //     } else {
+        //         String msg = new String(data);
+        //         if (newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
+        //             // don't show CR as ^M if directly before LF
+        //             msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
+        //             // special handling if CR and LF come in separate fragments
+        //             if (pendingNewline && msg.charAt(0) == '\n') {
+        //                 if(spn.length() >= 2) {
+        //                     spn.delete(spn.length() - 2, spn.length());
+        //                 } else {
+        //                     Editable edt = receiveText.getEditableText();
+        //                     if (edt != null && edt.length() >= 2)
+        //                         edt.delete(edt.length() - 2, edt.length());
+        //                 }
+        //             }
+        //             pendingNewline = msg.charAt(msg.length() - 1) == '\r';
+        //         }
+        //         spn.append(TextUtil.toCaretString(msg, newline.length() != 0));
+        //     }
+        // } 
+        // receiveText.append(spn);
     }
 
     void status(String str) {
@@ -444,13 +535,21 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         intent.putExtra("android.provider.extra.APP_PACKAGE", getActivity().getPackageName());
         startActivity(intent);
     }
-
+    private void requestBatteryOptimizationSettings() {  
+        Intent intent = new Intent("android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS");  
+        Uri uri = Uri.parse("package:" + getActivity().getPackageName());  
+        intent.setData(uri);  
+        startActivity(intent);  
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if(Arrays.equals(permissions, new String[]{Manifest.permission.POST_NOTIFICATIONS}) &&
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !service.areNotificationsEnabled())
+        {
             showNotificationSettings();
+            requestBatteryOptimizationSettings();
+        }
     }
 
     /*

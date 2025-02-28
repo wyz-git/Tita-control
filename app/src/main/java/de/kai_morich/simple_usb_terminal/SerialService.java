@@ -85,6 +85,7 @@ public class SerialService extends Service implements SerialListener {
         socket.connect(this);
         this.socket = socket;
         connected = true;
+        createNotification(); // 显示通知  
     }
 
     public void disconnect() {
@@ -138,7 +139,7 @@ public class SerialService extends Service implements SerialListener {
         // items already in event queue (posted before detach() to mainLooper) will end up in queue1
         // items occurring later, will be moved directly to queue2
         // detach() and mainLooper.post run in the main thread, so all items are caught
-        listener = null;
+        // listener = null;
     }
 
     private void initNotification() {
@@ -183,7 +184,7 @@ public class SerialService extends Service implements SerialListener {
     }
 
     private void cancelNotification() {
-        stopForeground(true);
+        // stopForeground(false);
     }
 
     /**
@@ -229,18 +230,38 @@ public class SerialService extends Service implements SerialListener {
 
     public void onSerialRead(ArrayDeque<byte[]> datas) { throw new UnsupportedOperationException(); }
 
+    private void updateNotification(int count) {  
+        // 这里你可以使用 NotificationManager 来发送或更新一个通知  
+        // 通知的内容可以包括接收到的数据量  
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);  
+        if (notificationManager != null) {  
+                NotificationCompat.Builder builder = new NotificationCompat.Builder(this, Constants.NOTIFICATION_CHANNEL) 
+                    .setSmallIcon(R.drawable.ic_notification)  
+                    .setContentTitle("Data Received")  
+                    .setContentText("Received " + count + " bytes");  
+    
+            // 如果通知已经存在，则更新它；否则，创建一个新的通知  
+            // 注意：这里需要根据你的实际需求来调整逻辑  
+            // 例如，你可能需要保存 Notification 的 ID 并使用 notify(id, builder.build()) 来更新它  
+            notificationManager.notify(1, builder.build());  
+        }  
+    }
+
+    private int receivedDataCount = 0;  
     /**
      * reduce number of UI updates by merging data chunks.
-     * Data can arrive at hundred chunks per second, but the UI can only
+     * Data can arrive at hundred chunks per second, but the UI c an only
      * perform a dozen updates if receiveText already contains much text.
      *
      * On new data inform UI thread once (1).
      * While not consumed (2), add more data (3).
      */
     public void onSerialRead(byte[] data) {
+        connected = true;
         if(connected) {
             synchronized (this) {
                 if (listener != null) {
+                    updateNotification(receivedDataCount++);
                     boolean first;
                     synchronized (lastRead) {
                         first = lastRead.datas.isEmpty(); // (1)
