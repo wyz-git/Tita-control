@@ -25,6 +25,8 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import android.content.Intent;
+import de.kai_morich.simple_usb_terminal.FullscreenHelloActivity;
 
 public class DevicesFragment extends ListFragment {
 
@@ -110,10 +112,16 @@ public class DevicesFragment extends ListFragment {
             });
             builder.create().show();
             return true;
+        } else if (id == R.id.joystick) {  // 新增摇杆菜单处理
+            // 启动全屏Activity
+            Intent intent = new Intent(getActivity(), FullscreenHelloActivity.class);
+            startActivity(intent);
+            return true;
         } else {
             return super.onOptionsItemSelected(item);
         }
     }
+
 
     void refresh() {
         UsbManager usbManager = (UsbManager) getActivity().getSystemService(Context.USB_SERVICE);

@@ -38,6 +38,15 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/usb_device_filter" />
         </activity>
+
+        <!-- 新增全屏Activity配置 -->
+        <activity
+            android:name=".FullscreenHelloActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:screenOrientation="portrait" 
+            android:exported="false"/>  <!-- 不需要外部调用时设为false -->
+
+
         <service
             android:name=".SerialService"
             android:foregroundServiceType="remoteMessaging|connectedDevice" />
