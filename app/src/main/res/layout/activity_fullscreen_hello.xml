@@ -1,10 +1,20 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black"
     android:padding="8dp">
+
+    <!-- 视频播放器 -->
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/button_container"
+        android:layout_above="@id/left_joystick"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"/>
 
     <!-- 按钮布局保持在顶部中央 -->
     <LinearLayout

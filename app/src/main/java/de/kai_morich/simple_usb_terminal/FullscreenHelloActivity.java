@@ -8,6 +8,8 @@ import android.widget.Button;
 import android.content.pm.ActivityInfo;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.media3.ui.PlayerView;
 
 public class FullscreenHelloActivity extends AppCompatActivity {
 
@@ -20,14 +22,18 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private Runnable dataUpdateRunnable;
 
+    // Player and ViewModel
+    private PlayerView playerView;
+    private PlayerViewModel playerViewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
+
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        
+
         setContentView(R.layout.activity_fullscreen_hello);
 
         // 初始化控件
@@ -35,6 +41,17 @@ public class FullscreenHelloActivity extends AppCompatActivity {
         rightJoystick = findViewById(R.id.right_joystick);
         btnSwitch1 = findViewById(R.id.btn_switch1);
         btnSwitch2 = findViewById(R.id.btn_switch2);
+
+        // 初始化 ViewModel
+        playerViewModel = new ViewModelProvider(this).get(PlayerViewModel.class);
+
+        // 初始化播放器
+        playerView = findViewById(R.id.player_view);
+        playerView.setPlayer(playerViewModel.getPlayer());
+
+        // 设置 SRT 流
+        String srtUrl = "srt://119.23.220.15:8890?streamid=read:live";
+        playerViewModel.setMediaItem(srtUrl);
 
         setupButtonListeners();
         initDataLogger();
@@ -84,15 +101,23 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         handler.post(dataUpdateRunnable);
+        playerViewModel.getPlayer().play();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(dataUpdateRunnable);
+        playerViewModel.getPlayer().pause();
     }
 
-    // 保留原有的全屏控制方法
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(dataUpdateRunnable);
+    }
+
+    // Fullscreen control
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
