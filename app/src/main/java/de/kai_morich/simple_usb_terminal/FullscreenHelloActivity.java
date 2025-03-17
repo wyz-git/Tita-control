@@ -11,6 +11,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.ui.PlayerView;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+
+import java.nio.charset.StandardCharsets;
+
 public class FullscreenHelloActivity extends AppCompatActivity {
 
     // 控件声明
@@ -19,10 +27,10 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     private Button btnSwitch1, btnSwitch2, btnSwitch3, btnSwitch4;
     
     // 状态变量
-    private boolean btn1State = false;
+    private boolean btn1State = true;
     private int btn2State = 0;
-    private boolean btn3State = false; // 新增按钮3状态
-    private int btn4State = 0;         // 新增按钮4状态
+    private boolean btn3State = false;
+    private int btn4State = 2;
     
     private Handler handler = new Handler();
     private Runnable dataUpdateRunnable;
@@ -30,6 +38,11 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     // 播放器相关
     private PlayerView playerView;
     private PlayerViewModel playerViewModel;
+
+    // MQTT配置
+    private static final String MQTT_SERVER = "tcp://119.23.220.15:1883";
+    private static final String MQTT_TOPIC = "Virtual10";
+    private MqttClient mqttClient;
 
     // 颜色常量
     private static final int COLOR_GREEN = 0xFF4CAF50;
@@ -41,18 +54,21 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 保持全屏设置
+        // 全屏设置
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_fullscreen_hello);
 
-        // 初始化所有控件
+        // 初始化控件
         initViews();
         
         // 播放器初始化
         initPlayer();
+
+        // MQTT初始化
+        initMQTT();
 
         setupButtonListeners();
         initDataLogger();
@@ -63,8 +79,8 @@ public class FullscreenHelloActivity extends AppCompatActivity {
         rightJoystick = findViewById(R.id.right_joystick);
         btnSwitch1 = findViewById(R.id.btn_switch1);
         btnSwitch2 = findViewById(R.id.btn_switch2);
-        btnSwitch3 = findViewById(R.id.btn_switch3); // 新增按钮
-        btnSwitch4 = findViewById(R.id.btn_switch4); // 新增按钮
+        btnSwitch3 = findViewById(R.id.btn_switch3);
+        btnSwitch4 = findViewById(R.id.btn_switch4);
     }
 
     private void initPlayer() {
@@ -77,12 +93,38 @@ public class FullscreenHelloActivity extends AppCompatActivity {
         playerViewModel.setMediaItem(srtUrl);
     }
 
+    private void initMQTT() {
+        try {
+            mqttClient = new MqttClient(
+                MQTT_SERVER,
+                MqttClient.generateClientId(),
+                new MemoryPersistence()
+            );
+            
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setCleanSession(true);
+            
+            // 异步连接
+            new Thread(() -> {
+                try {
+                    mqttClient.connect(options);
+                    Log.d("MQTT", "Connected to broker");
+                } catch (MqttException e) {
+                    Log.e("MQTT", "Connection error: ", e);
+                }
+            }).start();
+            
+        } catch (MqttException e) {
+            Log.e("MQTT", "Init error: ", e);
+        }
+    }
+
     private void setupButtonListeners() {
         // 左侧按钮组
         btnSwitch1.setOnClickListener(v -> toggleButtonState(btnSwitch1, true));
         btnSwitch2.setOnClickListener(v -> cycleButtonState(btnSwitch2, true));
         
-        // 右侧新增按钮组（与左侧相同逻辑）
+        // 右侧按钮组
         btnSwitch3.setOnClickListener(v -> toggleButtonState(btnSwitch3, false));
         btnSwitch4.setOnClickListener(v -> cycleButtonState(btnSwitch4, false));
     }
@@ -116,15 +158,9 @@ public class FullscreenHelloActivity extends AppCompatActivity {
             btn.setText(String.valueOf(value));
             int color;
             switch (value) {
-                case 1:
-                    color = COLOR_BLUE;
-                    break;
-                case 2:
-                    color = COLOR_ORANGE;
-                    break;
-                default:
-                    color = COLOR_GRAY;
-                    break;
+                case 1: color = COLOR_BLUE; break;
+                case 2: color = COLOR_ORANGE; break;
+                default: color = COLOR_GRAY; break;
             }
             btn.setBackgroundColor(color);
         } else {
@@ -140,23 +176,37 @@ public class FullscreenHelloActivity extends AppCompatActivity {
             @Override
             public void run() {
                 logControlData();
-                handler.postDelayed(this, 50);
+                handler.postDelayed(this, 50); // 100ms间隔
             }
         };
     }
 
     private void logControlData() {
-        float leftX = leftJoystick.getNormalizedX();
-        float leftY = leftJoystick.getNormalizedY();
-        float rightX = rightJoystick.getNormalizedX();
-        float rightY = rightJoystick.getNormalizedY();
-
-        Log.d("ControlData", String.format(
+        // 构建数据字符串
+        String data = String.format(
             "Joys: L[%.2f,%.2f] R[%.2f,%.2f] | BTN: [%d,%d,%d,%d]",
-            leftX, leftY, rightX, rightY,
-            btn1State ? 1 : 0, btn2State,
-            btn3State ? 1 : 0, btn4State
-        ));
+            leftJoystick.getNormalizedX(),
+            leftJoystick.getNormalizedY(),
+            rightJoystick.getNormalizedX(),
+            rightJoystick.getNormalizedY(),
+            btn1State ? 1 : 0,
+            btn2State,
+            btn3State ? 1 : 0,
+            btn4State
+        );
+
+        // 发布到MQTT
+        new Thread(() -> {
+            try {
+                if (mqttClient != null && mqttClient.isConnected()) {
+                    MqttMessage message = new MqttMessage();
+                    message.setPayload(data.getBytes(StandardCharsets.UTF_8));
+                    mqttClient.publish(MQTT_TOPIC, message);
+                }
+            } catch (MqttException e) {
+                Log.e("MQTT", "Publish error: ", e);
+            }
+        }).start();
     }
 
     @Override
@@ -164,7 +214,7 @@ public class FullscreenHelloActivity extends AppCompatActivity {
         super.onResume();
         handler.post(dataUpdateRunnable);
         playerViewModel.getPlayer().play();
-        // 恢复所有按钮状态
+        // 恢复按钮状态
         updateButtonAppearance(btnSwitch1, btn1State);
         updateButtonAppearance(btnSwitch2, btn2State);
         updateButtonAppearance(btnSwitch3, btn3State);
@@ -181,10 +231,19 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(dataUpdateRunnable);
+        // 释放MQTT连接
+        new Thread(() -> {
+            try {
+                if (mqttClient != null && mqttClient.isConnected()) {
+                    mqttClient.disconnect();
+                }
+            } catch (MqttException e) {
+                Log.e("MQTT", "Disconnect error: ", e);
+            }
+        }).start();
     }
 
-    // Fullscreen control
+    // 全屏控制
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
