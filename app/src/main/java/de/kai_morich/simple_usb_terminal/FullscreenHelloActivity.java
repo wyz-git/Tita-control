@@ -85,11 +85,11 @@ public class FullscreenHelloActivity extends AppCompatActivity {
         float rightX = rightJoystick.getNormalizedX();
         float rightY = rightJoystick.getNormalizedY();
 
-        Log.d("ControlData", String.format(
-            "Joys: L[%.2f,%.2f] R[%.2f,%.2f] | BTN: [%d,%d]",
-            leftX, leftY, rightX, rightY,
-            btn1State ? 1 : 0, btn2State ? 1 : 0
-        ));
+        // Log.d("ControlData", String.format(
+        //     "Joys: L[%.2f,%.2f] R[%.2f,%.2f] | BTN: [%d,%d]",
+        //     leftX, leftY, rightX, rightY,
+        //     btn1State ? 1 : 0, btn2State ? 1 : 0
+        // ));
     }
 
     private void updateButtonAppearance(Button btn, boolean state) {

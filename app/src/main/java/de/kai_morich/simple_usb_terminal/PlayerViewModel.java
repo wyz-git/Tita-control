@@ -19,6 +19,10 @@ import java.util.LinkedList;
 import java.util.Queue;
 import android.util.Log;
 
+import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl;
+import androidx.media3.exoplayer.DefaultLoadControl;
+import androidx.media3.exoplayer.SeekParameters;
+
 public class PlayerViewModel extends AndroidViewModel {
     private ExoPlayer exoPlayer;
     private static final String SRT_HOST = "119.23.220.15";
@@ -32,7 +36,23 @@ public class PlayerViewModel extends AndroidViewModel {
     }
 
     private void initializePlayer() {
-        exoPlayer = new ExoPlayer.Builder(getApplication()).build();
+        // 零缓冲配置
+        DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                1,    // minBufferMs (最小缓冲1ms)
+                1,    // maxBufferMs (最大缓冲1ms)
+                0,    // bufferForPlaybackMs (立即播放)
+                0     // bufferForPlaybackAfterRebufferMs (无重新缓冲)
+            )
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build();
+
+        exoPlayer = new ExoPlayer.Builder(getApplication())
+            .setLoadControl(loadControl)
+            .build();
+        
+        exoPlayer.setPlayWhenReady(true);
+        exoPlayer.setSeekParameters(SeekParameters.CLOSEST_SYNC);
     }
 
     public ExoPlayer getPlayer() {
@@ -63,6 +83,9 @@ public class PlayerViewModel extends AndroidViewModel {
                 srtSocket.setSockFlag(SockOpt.TRANSTYPE, Transtype.LIVE);
                 srtSocket.setSockFlag(SockOpt.PAYLOADSIZE, PAYLOAD_SIZE);
                 srtSocket.setSockFlag(SockOpt.STREAMID, STREAM_ID);
+                srtSocket.setSockFlag(SockOpt.RCVLATENCY, 0);
+                srtSocket.setSockFlag(SockOpt.TSBPDMODE, true);
+                srtSocket.setSockFlag(SockOpt.NAKREPORT, true);
                 srtSocket.connect(SRT_HOST, SRT_PORT);
                 return C.LENGTH_UNSET;
             } catch (Exception e) {
