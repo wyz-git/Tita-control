@@ -27,10 +27,10 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     private Button btnSwitch1, btnSwitch2, btnSwitch3, btnSwitch4;
     
     // 状态变量
-    private boolean btn1State = true;
-    private int btn2State = 0;
+    private boolean btn1State = false;
+    private int btn2State = 2;
     private boolean btn3State = false;
-    private int btn4State = 2;
+    private int btn4State = 0;
     
     private Handler handler = new Handler();
     private Runnable dataUpdateRunnable;
@@ -225,7 +225,7 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(dataUpdateRunnable);
-        playerViewModel.getPlayer().pause();
+        // playerViewModel.getPlayer().pause();
     }
 
     @Override

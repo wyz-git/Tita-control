@@ -14,6 +14,8 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource;
 import io.github.thibaultbee.srtdroid.core.enums.SockOpt;
 import io.github.thibaultbee.srtdroid.core.enums.Transtype;
 import io.github.thibaultbee.srtdroid.core.models.SrtSocket;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -36,20 +38,21 @@ public class PlayerViewModel extends AndroidViewModel {
     }
 
     private void initializePlayer() {
+        // 配置硬件解码
+        DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(getApplication())
+                .setEnableDecoderFallback(false)  // 启用解码器回退机制
+                .setMediaCodecSelector(MediaCodecSelector.DEFAULT);  // 使用默认的硬件编解码器
+
         // 零缓冲配置
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                1,    // minBufferMs (最小缓冲1ms)
-                1,    // maxBufferMs (最大缓冲1ms)
-                0,    // bufferForPlaybackMs (立即播放)
-                0     // bufferForPlaybackAfterRebufferMs (无重新缓冲)
-            )
-            .setPrioritizeTimeOverSizeThresholds(true)
-            .build();
+                .setBufferDurationsMs(1, 1, 0, 0)
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build();
 
         exoPlayer = new ExoPlayer.Builder(getApplication())
-            .setLoadControl(loadControl)
-            .build();
+                .setRenderersFactory(renderersFactory)  // 注入硬件解码配置
+                .setLoadControl(loadControl)
+                .build();
         
         exoPlayer.setPlayWhenReady(true);
         exoPlayer.setSeekParameters(SeekParameters.CLOSEST_SYNC);
