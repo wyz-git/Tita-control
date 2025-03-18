@@ -75,10 +75,11 @@ public class DevicesFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setListAdapter(null);
-        View header = getActivity().getLayoutInflater().inflate(R.layout.device_list_header, null, false);
-        getListView().addHeaderView(header, null, false);
-        setEmptyText("<no USB devices found>");
-        ((TextView) getListView().getEmptyView()).setTextSize(18);
+
+        // 如果没有USB设备连接，显示开关控件
+        View switchContainer = getActivity().getLayoutInflater().inflate(R.layout.switch_container, null, false);
+        getListView().addHeaderView(switchContainer, null, false);
+
         setListAdapter(listAdapter);
     }
 
