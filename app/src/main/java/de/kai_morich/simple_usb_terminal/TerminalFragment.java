@@ -416,6 +416,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
+    private String loginAccount;
+
+    public void onLoginSuccess(String username) {
+        this.loginAccount = username; // 接收登录账号
+    }
+
+    private String getLoginAccount() {
+        return loginAccount != null ? loginAccount : "default_account";
+    }
+
+
     private void sendAgain(byte[] data0, int offset) {
         updateSendBtn(controlLines.sendAllowed ? SendButtonState.Busy : SendButtonState.Disabled);
         if (connected != Connected.True) {

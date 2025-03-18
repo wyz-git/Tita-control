@@ -8,6 +8,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.fragment.app.Fragment;
+import android.content.SharedPreferences;
+import android.content.Context;
 
 public class LoginFragment extends Fragment {
     private OnLoginSuccessListener listener;
@@ -33,6 +35,12 @@ public class LoginFragment extends Fragment {
                 (username.equals("tita3037208") && password.equals("tita3037208"));
 
             if (isValid) {
+                // 存储登录账号
+                SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("login_account", username);
+                editor.apply();
+
                 if (listener != null) {
                     listener.onLoginSuccess();
                 }

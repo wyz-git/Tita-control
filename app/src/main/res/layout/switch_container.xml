@@ -16,7 +16,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 1"
+            android:text="Stop obstacles"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -37,7 +37,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 2"
+            android:text="SDK Mode"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -58,7 +58,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 3"
+            android:text="Image transmission"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -79,7 +79,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 4"
+            android:text="Follow Mode"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -100,7 +100,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 5"
+            android:text="Gesture follow"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -121,7 +121,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 6"
+            android:text="Human body follow"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -142,7 +142,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 7"
+            android:text="Remote Voice"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -163,7 +163,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 8"
+            android:text="Remote Radio"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -184,7 +184,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 9"
+            android:text="Warehouse Charge"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -205,7 +205,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch 10"
+            android:text="Navigation mode"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
