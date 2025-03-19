@@ -127,6 +127,8 @@ public class DevicesFragment extends ListFragment {
     public void onResume() {
         super.onResume();
         refresh();
+        connectToMqttServer();
+        startMqttPublishTask();
     }
 
     @Override
