@@ -18,6 +18,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 import java.nio.charset.StandardCharsets;
+import android.content.SharedPreferences;
+import android.content.Context;
 
 public class FullscreenHelloActivity extends AppCompatActivity {
 
@@ -41,7 +43,7 @@ public class FullscreenHelloActivity extends AppCompatActivity {
 
     // MQTT配置
     private static final String MQTT_SERVER = "tcp://119.23.220.15:1883";
-    private static final String MQTT_TOPIC = "Virtual10";
+    private static String MQTT_TOPIC = "Virtual10";
     private MqttClient mqttClient;
 
     // 颜色常量
@@ -60,7 +62,8 @@ public class FullscreenHelloActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_fullscreen_hello);
-
+        
+        MQTT_TOPIC = getMqttTopic();
         // 初始化控件
         initViews();
         
@@ -72,6 +75,16 @@ public class FullscreenHelloActivity extends AppCompatActivity {
 
         setupButtonListeners();
         initDataLogger();
+    }
+
+    private String getLoginAccount() {
+        SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("login_account", "default_account");
+    }
+
+    private String getMqttTopic() {
+        String loginAccount = getLoginAccount();
+        return loginAccount + "-virtual";
     }
 
     private void initViews() {

@@ -86,7 +86,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private List<Byte> serialBuffer = new ArrayList<>();
     private static final String MQTT_SERVER = "tcp://119.23.220.15:1883";  
     private static final int MQTT_PORT = 1883;  
-    private static final String MQTT_TOPIC = "joy10";  
+    private static String MQTT_TOPIC = "joy10";  
     private MqttClient client;  
 
     public TerminalFragment() {
@@ -141,11 +141,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MQTT_TOPIC = getMqttTopic();
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceId = getArguments().getInt("device");
         portNum = getArguments().getInt("port");
         baudRate = getArguments().getInt("baud");  
+    }
+
+    private String getMqttTopic() {
+        String loginAccount = getLoginAccount();
+        return loginAccount + "-joy";
     }
 
     @Override

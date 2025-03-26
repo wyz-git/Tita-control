@@ -32,7 +32,10 @@ public class LoginFragment extends Fragment {
             // 验证账号密码
             boolean isValid = 
                 (username.equals("tita3037207") && password.equals("tita3037207")) ||
-                (username.equals("tita3037208") && password.equals("tita3037208"));
+                (username.equals("tita3037208") && password.equals("tita3037208")) ||
+                (username.equals("tita3037333") && password.equals("tita3037333")) ||
+                (username.equals("tita4265491") && password.equals("tita4265491")) ||
+                (username.equals("tita4233560") && password.equals("tita4233560"));
 
             if (isValid) {
                 // 存储登录账号

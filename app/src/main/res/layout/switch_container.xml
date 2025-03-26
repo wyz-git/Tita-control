@@ -79,7 +79,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Follow Mode"
+            android:text="Code follow"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
@@ -163,7 +163,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Remote Radio"
+            android:text="Remote usb control"
             android:textSize="16sp"
             android:gravity="center_vertical" />
 
