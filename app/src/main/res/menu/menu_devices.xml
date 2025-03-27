@@ -9,4 +9,7 @@
     <item
         android:id="@+id/joystick"
         android:title="Virtual Joystick" />
+    <item
+        android:id="@+id/bluetooth_joystick"
+        android:title="Bluetooth Joystick" />
 </menu>

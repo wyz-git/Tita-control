@@ -155,6 +155,10 @@ public class DevicesFragment extends ListFragment {
             Intent intent = new Intent(getActivity(), FullscreenHelloActivity.class);
             startActivity(intent);
             return true;
+        }else if (id == R.id.bluetooth_joystick) {  // 新增摇杆菜单处理
+		    Intent intent = new Intent(getActivity(), BluetoothDeviceListActivity.class);
+		    startActivity(intent);
+		    return true;
         }else {
             return super.onOptionsItemSelected(item);
         }

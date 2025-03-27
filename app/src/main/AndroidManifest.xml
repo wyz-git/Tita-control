@@ -12,6 +12,19 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />  
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>  
+    <!-- 基础蓝牙权限 -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Android 12+ 新增权限 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" 
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- 硬件特性声明 -->
+    <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
     <!-- mipmap/ic_launcher created with Android Studio -> New -> Image Asset using @color/colorPrimaryDark as background color -->
     <application
         android:icon="@mipmap/ic_launcher"
@@ -54,6 +67,10 @@
             android:screenOrientation="portrait" 
             android:exported="false"/>  <!-- 不需要外部调用时设为false -->
 
+        <activity 
+            android:name=".BluetoothDeviceListActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:exported="false"/>
 
         <service
             android:name=".SerialService"
