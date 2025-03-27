@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 import android.util.Log;
+import android.content.Context;
+import android.content.SharedPreferences;
+
 
 import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl;
 import androidx.media3.exoplayer.DefaultLoadControl;
@@ -29,12 +32,22 @@ public class PlayerViewModel extends AndroidViewModel {
     private ExoPlayer exoPlayer;
     private static final String SRT_HOST = "119.23.220.15";
     private static final int SRT_PORT = 8890;
-    private static final String STREAM_ID = "read:live";
+    private static final String STREAM_ID = "read:tita3037207";
     private static final int PAYLOAD_SIZE = 1316;
 
     public PlayerViewModel(Application application) {
         super(application);
         initializePlayer();
+    }
+
+    private String getLoginAccount() {
+        SharedPreferences sharedPreferences = getApplication()  // 通过AndroidViewModel的getApplication()
+                .getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("login_account", "default_account");
+    }
+
+    private String getStreamId() {
+        return "read:" + getLoginAccount();
     }
 
     private void initializePlayer() {
@@ -85,7 +98,7 @@ public class PlayerViewModel extends AndroidViewModel {
                 srtSocket = new SrtSocket();
                 srtSocket.setSockFlag(SockOpt.TRANSTYPE, Transtype.LIVE);
                 srtSocket.setSockFlag(SockOpt.PAYLOADSIZE, PAYLOAD_SIZE);
-                srtSocket.setSockFlag(SockOpt.STREAMID, STREAM_ID);
+                srtSocket.setSockFlag(SockOpt.STREAMID, getStreamId());
                 srtSocket.setSockFlag(SockOpt.RCVLATENCY, 0);
                 srtSocket.setSockFlag(SockOpt.TSBPDMODE, true);
                 srtSocket.setSockFlag(SockOpt.NAKREPORT, true);
