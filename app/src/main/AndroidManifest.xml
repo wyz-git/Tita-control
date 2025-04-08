@@ -72,6 +72,15 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:exported="false"/>
 
+        <activity 
+            android:name=".BluetoothConnectionActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:exported="false"/>
+            
+        <activity 
+            android:name=".BluetoothDataActivity"
+            android:exported="false"/>
+
         <service
             android:name=".SerialService"
             android:foregroundServiceType="remoteMessaging|connectedDevice" />

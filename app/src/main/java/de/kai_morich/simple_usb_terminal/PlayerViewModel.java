@@ -32,7 +32,7 @@ public class PlayerViewModel extends AndroidViewModel {
     private ExoPlayer exoPlayer;
     private static final String SRT_HOST = "119.23.220.15";
     private static final int SRT_PORT = 8890;
-    private static final String STREAM_ID = "read:tita3037207";
+    private static final String STREAM_ID = "read:ao2car3037207";
     private static final int PAYLOAD_SIZE = 1316;
 
     public PlayerViewModel(Application application) {

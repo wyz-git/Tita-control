@@ -35,8 +35,10 @@ public class LoginFragment extends Fragment {
                 (username.equals("tita3037208") && password.equals("tita3037208")) ||
                 (username.equals("tita3037333") && password.equals("tita3037333")) ||
                 (username.equals("tita4265491") && password.equals("tita4265491")) ||
-                (username.equals("tita4233560") && password.equals("tita4233560"));
-
+                (username.equals("tita4233560") && password.equals("tita4233560")) ||
+                (username.equals("tita4233739") && password.equals("tita4233739")) ||
+                (username.equals("tita4264785") && password.equals("tita4264785")) ||
+                (username.equals("ao2car2063135") && password.equals("ao2car2063135"));
             if (isValid) {
                 // 存储登录账号
                 SharedPreferences sharedPreferences = getActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
