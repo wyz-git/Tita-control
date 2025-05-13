@@ -46,9 +46,9 @@ public class MainActivity extends AppCompatActivity implements
     private void replaceFragment(Fragment fragment, String tag) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment, fragment, tag);
-        if (!tag.equals("login")) {
-            transaction.addToBackStack(null); // 允许返回导航
-        }
+        // if (!tag.equals("login")) {
+        //     transaction.addToBackStack(null); // 允许返回导航
+        // }
         transaction.commit();
     }
 

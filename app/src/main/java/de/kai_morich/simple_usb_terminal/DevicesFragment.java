@@ -109,13 +109,13 @@ public class DevicesFragment extends ListFragment {
     public void onPause() {
         super.onPause();
         stopMqttPublishTask(); // 停止定时任务
-        if (client != null && client.isConnected()) {
-            try {
-                client.disconnect();
-            } catch (MqttException e) {
-                e.printStackTrace();
-            }
-        }
+        // if (client != null && client.isConnected()) {
+        //     try {
+        //         client.disconnect();
+        //     } catch (MqttException e) {
+        //         e.printStackTrace();
+        //     }
+        // }
     }
 
     @Override
@@ -201,15 +201,7 @@ public class DevicesFragment extends ListFragment {
     }
 
     private void connectToMqttServer() {
-        try {
-            client = new MqttClient(MQTT_SERVER, "DevicesFragmentClient", new MemoryPersistence());
-            MqttConnectOptions connOpts = new MqttConnectOptions();
-            connOpts.setCleanSession(true);
-            client.connect(connOpts);
-        } catch (MqttException e) {
-            e.printStackTrace();
-            Toast.makeText(getActivity(), "MQTT connection failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        client = MqttManager.getInstance().getClient();
     }
 
     private void startMqttPublishTask() {
@@ -236,7 +228,7 @@ public class DevicesFragment extends ListFragment {
 
     private String getMqttTopic() {
         String loginAccount = getLoginAccount();
-        return loginAccount + "-control";
+        return loginAccount + "/switches";
     }
 
     private void publishSwitchStates() {

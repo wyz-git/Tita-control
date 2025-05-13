@@ -26,7 +26,7 @@
 
         <Button
             android:id="@+id/btn_switch1"
-            android:layout_width="60dp"
+            android:layout_width="50dp"
             android:layout_height="30dp"
             android:text="0"
             android:textSize="14sp"
@@ -37,7 +37,7 @@
 
         <Button
             android:id="@+id/btn_switch2"
-            android:layout_width="60dp"
+            android:layout_width="50dp"
             android:layout_height="30dp"
             android:text="0"
             android:textSize="14sp"
@@ -61,7 +61,7 @@
 
         <Button
             android:id="@+id/btn_switch3"
-            android:layout_width="60dp"
+            android:layout_width="50dp"
             android:layout_height="30dp"
             android:text="0"
             android:textSize="14sp"
@@ -72,7 +72,7 @@
 
         <Button
             android:id="@+id/btn_switch4"
-            android:layout_width="60dp"
+            android:layout_width="50dp"
             android:layout_height="30dp"
             android:text="0"
             android:textSize="14sp"
@@ -86,20 +86,22 @@
     <!-- 底部摇杆保持原样 -->
     <de.kai_morich.simple_usb_terminal.JoystickView
         android:id="@+id/left_joystick"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_marginStart="6dp"
-        android:layout_marginBottom="6dp"/>
+        android:layout_marginBottom="6dp"
+        android:alpha="0.5"/>
 
     <de.kai_morich.simple_usb_terminal.JoystickView
         android:id="@+id/right_joystick"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="6dp"
-        android:layout_marginBottom="6dp"/>
+        android:layout_marginBottom="6dp"
+        android:alpha="0.5"/>
 
 </RelativeLayout>

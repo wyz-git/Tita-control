@@ -86,7 +86,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private List<Byte> serialBuffer = new ArrayList<>();
     private static final String MQTT_SERVER = "tcp://119.23.220.15:1883";  
     private static final int MQTT_PORT = 1883;  
-    private static String MQTT_TOPIC = "joy10";  
+    private static String MQTT_TOPIC = "tita3037207/joy10";  
     private MqttClient client;  
 
     public TerminalFragment() {
@@ -103,36 +103,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void connectToMqttServer() {  
-        try { 
-            client = new MqttClient(MQTT_SERVER, "JavaSample",new MemoryPersistence());  
-            MqttConnectOptions connOpts = new MqttConnectOptions();  
-            connOpts.setCleanSession(true);  
-    
-            // client.connect(connOpts);  
-    
-            // 在这里可以继续使用 client 对象进行其他操作  
-    
-            try {  
-                client.connect(connOpts);    
-    
-                // 在这里可以继续使用 client 对象进行其他操作    
-    
-            } catch (MqttException e) {    
-                // 处理连接失败的情况    
-                status("MQTT 连接失败: " + e.getMessage());  
-                // 打印 MQTT 原因码（如果有的话）  
-                int reasonCode = e.getReasonCode();  
-                // if (reasonCode != 0) {  
-                    status("MQTT 原因码: " + reasonCode);  
-                // }  
-                // 可以打印堆栈跟踪以获取更多上下文  
-                e.printStackTrace();  
-                // 可以在这里添加重试逻辑，但请注意避免无限递归    
-            }    
-        } catch (Exception e) {  
-            // 处理其他类型的异常  
-            status("发生未知错误: " + e.getMessage());  
-        }  
+        client = MqttManager.getInstance().getClient();
     }  
 
     /*
@@ -141,7 +112,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        MQTT_TOPIC = getMqttTopic();
+        // MQTT_TOPIC = getMqttTopic();
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceId = getArguments().getInt("device");
@@ -151,7 +122,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private String getMqttTopic() {
         String loginAccount = getLoginAccount();
-        return loginAccount + "-joy";
+        return loginAccount + "/control";
     }
 
     @Override

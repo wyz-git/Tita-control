@@ -84,7 +84,7 @@ public class FullscreenHelloActivity extends AppCompatActivity {
 
     private String getMqttTopic() {
         String loginAccount = getLoginAccount();
-        return loginAccount + "-virtual";
+        return loginAccount + "/virtual";
     }
 
     private void initViews() {
@@ -107,29 +107,7 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     }
 
     private void initMQTT() {
-        try {
-            mqttClient = new MqttClient(
-                MQTT_SERVER,
-                MqttClient.generateClientId(),
-                new MemoryPersistence()
-            );
-            
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setCleanSession(true);
-            
-            // 异步连接
-            new Thread(() -> {
-                try {
-                    mqttClient.connect(options);
-                    Log.d("MQTT", "Connected to broker");
-                } catch (MqttException e) {
-                    Log.e("MQTT", "Connection error: ", e);
-                }
-            }).start();
-            
-        } catch (MqttException e) {
-            Log.e("MQTT", "Init error: ", e);
-        }
+        mqttClient = MqttManager.getInstance().getClient();
     }
 
     private void setupButtonListeners() {
@@ -244,16 +222,6 @@ public class FullscreenHelloActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // 释放MQTT连接
-        new Thread(() -> {
-            try {
-                if (mqttClient != null && mqttClient.isConnected()) {
-                    mqttClient.disconnect();
-                }
-            } catch (MqttException e) {
-                Log.e("MQTT", "Disconnect error: ", e);
-            }
-        }).start();
     }
 
     // 全屏控制
