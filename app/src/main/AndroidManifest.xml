@@ -73,6 +73,11 @@
             android:exported="false"/>
 
         <activity 
+            android:name=".DeviceListActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:exported="false"/>
+            
+        <activity 
             android:name=".BluetoothConnectionActivity"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:exported="false"/>

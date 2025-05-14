@@ -25,7 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
 
-
+import java.util.Arrays;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
@@ -53,7 +53,7 @@ public class DevicesFragment extends ListFragment {
             this.driver = driver;
         }
     }
-
+    private boolean isViewCreated = false;
     private final ArrayList<ListItem> listItems = new ArrayList<>();
     private ArrayAdapter<ListItem> listAdapter;
     private int baudRate = 420000;
@@ -87,6 +87,12 @@ public class DevicesFragment extends ListFragment {
                 return view;
             }
         };
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        isViewCreated = true; // 标记视图已创建
     }
 
     @Override
@@ -139,15 +145,30 @@ public class DevicesFragment extends ListFragment {
             return true;
         } else if (id == R.id.baud_rate) {
             final String[] baudRates = getResources().getStringArray(R.array.baud_rates);
-            int pos = java.util.Arrays.asList(baudRates).indexOf(String.valueOf(baudRate));
+            int currentPos = Arrays.asList(baudRates).indexOf(String.valueOf(baudRate));
+            final int[] selectedPos = {currentPos}; // 用于保存用户选择的位置p
+
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle("Baud rate");
-            builder.setSingleChoiceItems(baudRates, pos, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int item) {
-                    baudRate = Integer.parseInt(baudRates[item]);
-                    dialog.dismiss();
-                }
-            });
+            builder.setTitle("选择波特率")
+                    .setSingleChoiceItems(baudRates, currentPos, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            selectedPos[0] = which; // 更新选中的位置
+                        }
+                    })
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // 1. 设置波特率
+                            baudRate = Integer.parseInt(baudRates[selectedPos[0]]);
+                            
+                            // 2. 跳转到新界面
+                            Intent intent = new Intent(getActivity(), DeviceListActivity.class);
+                            intent.putExtra("BAUD_RATE", baudRate);
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton("取消", null);
             builder.create().show();
             return true;
         } else if (id == R.id.joystick) {  // 新增摇杆菜单处理
@@ -232,18 +253,24 @@ public class DevicesFragment extends ListFragment {
     }
 
     private void publishSwitchStates() {
+        if (!isViewCreated || getActivity() == null || !isAdded()) {
+            return; // 确保在视图可用时执行
+        }
+        
+        // ✅ 使用安全方式获取 ListView
+        ListView listView = getListView();
+        if (listView == null || listView.getChildCount() == 0) {
+            return;
+        }
+        
+        View switchContainer = listView.getChildAt(0);
+
         if (client == null || !client.isConnected()) {
             return; // 如果 MQTT 客户端未连接，则不发布
         }
 
         // 获取 MQTT Topic
         String mqttTopic = getMqttTopic();
-
-        // 获取开关控件
-        View switchContainer = getListView().getChildAt(0); // 获取开关容器
-        if (switchContainer == null) {
-            return;
-        }
 
         // 构建 JSON 消息
         JSONObject json = new JSONObject();

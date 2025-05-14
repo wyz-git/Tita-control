@@ -34,6 +34,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import android.content.SharedPreferences;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -103,6 +105,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void connectToMqttServer() {  
+        MQTT_TOPIC = getMqttTopic();
+        Log.d("MQTT", "Generated Topic: " + MQTT_TOPIC); // ✅ 添加日志
         client = MqttManager.getInstance().getClient();
     }  
 
@@ -112,7 +116,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // MQTT_TOPIC = getMqttTopic();
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceId = getArguments().getInt("device");
@@ -393,16 +396,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private String loginAccount;
-
-    public void onLoginSuccess(String username) {
-        this.loginAccount = username; // 接收登录账号
-    }
-
     private String getLoginAccount() {
-        return loginAccount != null ? loginAccount : "default_account";
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        return sharedPreferences.getString("login_account", "default_account");
     }
-
 
     private void sendAgain(byte[] data0, int offset) {
         updateSendBtn(controlLines.sendAllowed ? SendButtonState.Busy : SendButtonState.Disabled);
@@ -450,13 +447,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         for (int i = 0; i < 26; i++) {  
                             messageToSend[i] = serialBuffer.get(index + i);  
                         }  
-    
-                        // 假设你有一个函数来发布MQTT消息  
-                                        // 发布MQTT消息  
                         try {  
-                            publishMQTTMessage(messageToSend);;  
+                            publishMQTTMessage(messageToSend);
+                            // Log.d("MQTT", "Publish ok: " + Arrays.toString(messageToSend));
                         } catch (MqttException e) {  
-                            status("loss connection");
+                            // Log.d("MQTT", "Publish fail: " + Arrays.toString(messageToSend));
                         } 
                         // 移除已处理的消息  
                         // serialBuffer = serialBuffer.subList(index + 26, serialBuffer.size()); 
