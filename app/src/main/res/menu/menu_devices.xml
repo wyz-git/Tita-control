@@ -5,7 +5,7 @@
         android:title="Refresh Devices" />
     <item
         android:id="@+id/baud_rate"
-        android:title="Baud rate" />
+        android:title="USB Joystick" />
     <item
         android:id="@+id/joystick"
         android:title="Virtual Joystick" />

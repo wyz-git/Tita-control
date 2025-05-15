@@ -9,11 +9,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.Cipher;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -21,21 +24,45 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
 public class LoginFragment extends Fragment {
     private OnLoginSuccessListener listener;
+    private Button btnSkip;
     private Button btnLogin;
+    private CheckBox cbRemember;
     private Handler mainHandler = new Handler(Looper.getMainLooper());
     private volatile boolean isVerifying = false;
+    private SharedPreferences prefs;
 
     public interface OnLoginSuccessListener {
         void onLoginSuccess();
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_login, container, false);
         EditText etUsername = view.findViewById(R.id.et_username);
         EditText etPassword = view.findViewById(R.id.et_password);
         btnLogin = view.findViewById(R.id.btn_login);
+        cbRemember = view.findViewById(R.id.cb_remember);
+        // 初始化跳过按钮
+        btnSkip = view.findViewById(R.id.btn_skip);
 
+        prefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+
+        // 自动填充保存的凭证
+        String savedUser = prefs.getString("login_account", "");
+        String savedPass = prefs.getString("saved_password", "");
+        boolean remember = prefs.getBoolean("remember_password", false);
+
+        etUsername.setText(savedUser);
+        if (remember && !savedPass.isEmpty()) {
+            try {
+                etPassword.setText(SimpleCrypto.decrypt(savedPass));
+            } catch (Exception e) {
+                etPassword.setText("");
+                prefs.edit().remove("saved_password").apply();
+            }
+        }
+        cbRemember.setChecked(remember);
+        
         btnLogin.setOnClickListener(v -> {
             if (isVerifying) return;
 
@@ -59,16 +86,14 @@ public class LoginFragment extends Fragment {
                     options.setUserName(username);
                     options.setPassword(password.toCharArray());
                     options.setConnectionTimeout(10);
-                    options.setAutomaticReconnect(true); // 启用自动重连
-                    
-                    // 使用单例管理器连接
+                    options.setAutomaticReconnect(true);
+
                     MqttManager.getInstance().connect(serverUri, options);
                     
                     mainHandler.post(() -> {
-                        SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
-                        prefs.edit().putString("login_account", username).apply();
+                        saveCredentials(username, password);
                         if (listener != null) {
-                            listener.onLoginSuccess(); // 通知登录成功
+                            listener.onLoginSuccess();
                         }
                     });
                 } catch (MqttException e) {
@@ -80,18 +105,46 @@ public class LoginFragment extends Fragment {
             }).start();
         });
 
+        // 跳过按钮点击事件
+        btnSkip.setOnClickListener(v -> {
+            if (listener != null) {
+                // 直接触发登录成功回调，不进行任何连接操作
+                SharedPreferences.Editor editor = prefs.edit();
+                // 精准删除登录相关字段
+                editor.remove("login_account")
+                    .remove("saved_password")
+                    .remove("remember_password")
+                    .apply();
+                
+                // 可选：同时重置UI状态
+                mainHandler.post(() -> {
+                    etUsername.setText("");
+                    etPassword.setText("");
+                    cbRemember.setChecked(false);
+                });
+                listener.onLoginSuccess();
+            }
+        });
         return view;
     }
 
-    private void handleLoginSuccess(String username) {
-        mainHandler.post(() -> {
-            SharedPreferences prefs = requireActivity().getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
-            prefs.edit().putString("login_account", username).apply();
-            if (listener != null) {
-                listener.onLoginSuccess();
+    private void saveCredentials(String username, String password) {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("login_account", username);
+        
+        if (cbRemember.isChecked()) {
+            try {
+                editor.putString("saved_password", SimpleCrypto.encrypt(password));
+                editor.putBoolean("remember_password", true);
+            } catch (Exception e) {
+                e.printStackTrace();
+                editor.remove("saved_password");
             }
-            btnLogin.setEnabled(true);
-        });
+        } else {
+            editor.remove("saved_password")
+                  .putBoolean("remember_password", false);
+        }
+        editor.apply();
     }
 
     private void handleLoginFailure(MqttException e) {
@@ -99,7 +152,6 @@ public class LoginFragment extends Fragment {
             String errorMessage = "验证失败";
             int reasonCode = e.getReasonCode();
 
-            // 根据MQTT协议返回码判断错误类型
             switch (reasonCode) {
                 case MqttException.REASON_CODE_FAILED_AUTHENTICATION:
                     errorMessage = "账号或密码错误（代码 4）";
@@ -126,8 +178,6 @@ public class LoginFragment extends Fragment {
             Toast.makeText(getActivity(), 
                 errorMessage + "\n错误详情: " + e.getMessage(), 
                 Toast.LENGTH_LONG).show();
-            
-            btnLogin.setEnabled(true);
         });
     }
 
@@ -139,11 +189,30 @@ public class LoginFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // 取消可能正在进行的验证
         isVerifying = false;
     }
 
     public void setOnLoginSuccessListener(OnLoginSuccessListener listener) {
         this.listener = listener;
+    }
+
+    // 加密工具类
+    public static class SimpleCrypto {
+        private static final String ALGORITHM = "AES";
+        private static final byte[] KEY = "MySuperSecretKey".getBytes();
+
+        public static String encrypt(String value) throws Exception {
+            SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, key);
+            return android.util.Base64.encodeToString(cipher.doFinal(value.getBytes()), android.util.Base64.DEFAULT);
+        }
+
+        public static String decrypt(String value) throws Exception {
+            SecretKeySpec key = new SecretKeySpec(KEY, ALGORITHM);
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, key);
+            return new String(cipher.doFinal(android.util.Base64.decode(value, android.util.Base64.DEFAULT)));
+        }
     }
 }

@@ -18,10 +18,23 @@
         android:hint="密码"
         android:inputType="textPassword"/>
 
+    <CheckBox
+        android:id="@+id/cb_remember"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="记住密码"/>
+
     <Button
         android:id="@+id/btn_login"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="登录"/>
+
+    <Button
+        android:id="@+id/btn_skip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="跳过"
+        android:layout_marginTop="8dp"/>
 
 </LinearLayout>

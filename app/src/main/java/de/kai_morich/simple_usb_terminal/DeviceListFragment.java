@@ -82,7 +82,7 @@ public class DeviceListFragment extends ListFragment {
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_devices, menu);
+        inflater.inflate(R.menu.usb_devices, menu);
     }
 
     @Override

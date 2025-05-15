@@ -74,16 +74,16 @@ public class DevicesFragment extends ListFragment {
             public View getView(int position, View view, @NonNull ViewGroup parent) {
                 ListItem item = listItems.get(position);
                 if (view == null)
-                    view = getActivity().getLayoutInflater().inflate(R.layout.device_list_item, parent, false);
-                TextView text1 = view.findViewById(R.id.text1);
-                TextView text2 = view.findViewById(R.id.text2);
-                if (item.driver == null)
-                    text1.setText("<no driver>");
-                else if (item.driver.getPorts().size() == 1)
-                    text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver", ""));
-                else
-                    text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver", "") + ", Port " + item.port);
-                text2.setText(String.format(Locale.US, "Vendor %04X, Product %04X", item.device.getVendorId(), item.device.getProductId()));
+                    view = getActivity().getLayoutInflater().inflate(R.layout.device_list_activity, parent, false);
+                // TextView text1 = view.findViewById(R.id.text1);
+                // TextView text2 = view.findViewById(R.id.text2);
+                // if (item.driver == null)
+                //     text1.setText("<no driver>");
+                // else if (item.driver.getPorts().size() == 1)
+                //     text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver", ""));
+                // else
+                //     text1.setText(item.driver.getClass().getSimpleName().replace("SerialDriver", "") + ", Port " + item.port);
+                // text2.setText(String.format(Locale.US, "Vendor %04X, Product %04X", item.device.getVendorId(), item.device.getProductId()));
                 return view;
             }
         };
@@ -98,6 +98,9 @@ public class DevicesFragment extends ListFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        // 添加以下两行代码
+        getListView().setDivider(null); 
+        getListView().setDividerHeight(0);
         setListAdapter(null);
 
         // 如果没有USB设备连接，显示开关控件
