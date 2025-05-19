@@ -24,6 +24,8 @@ import de.kai_morich.simple_usb_terminal.FullscreenHelloActivity;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.ListFragment;
+import android.widget.ToggleButton;
+import android.widget.CompoundButton;
 
 import java.util.Arrays;
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
@@ -57,7 +59,8 @@ public class DevicesFragment extends ListFragment {
     private final ArrayList<ListItem> listItems = new ArrayList<>();
     private ArrayAdapter<ListItem> listAdapter;
     private int baudRate = 420000;
-
+    private ToggleButton modeToggle;
+    private boolean isBluetoothMode = false;
     private MqttClient client;
     private Handler mqttHandler = new Handler(Looper.getMainLooper());
     private Runnable mqttRunnable;
@@ -107,11 +110,29 @@ public class DevicesFragment extends ListFragment {
         View switchContainer = getActivity().getLayoutInflater().inflate(R.layout.switch_container, null, false);
         getListView().addHeaderView(switchContainer, null, false);
 
+        modeToggle = switchContainer.findViewById(R.id.mode_toggle);
+        modeToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                isBluetoothMode = isChecked;
+                if (isBluetoothMode) {
+                    // 切换到蓝牙模式
+                    // stopMqttPublishTask();
+                    Toast.makeText(getActivity(), "已切换到蓝牙模式", Toast.LENGTH_SHORT).show();
+                } else {
+                    // 切换到MQTT模式
+                    connectToMqttServer();
+                    startMqttPublishTask();
+                    Toast.makeText(getActivity(), "已切换到MQTT模式", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         setListAdapter(listAdapter);
 
         // 初始化 MQTT 客户端并启动定时任务
-        connectToMqttServer();
-        startMqttPublishTask();
+        // connectToMqttServer();
+        // startMqttPublishTask();
     }
 
     @Override
@@ -268,14 +289,7 @@ public class DevicesFragment extends ListFragment {
         
         View switchContainer = listView.getChildAt(0);
 
-        if (client == null || !client.isConnected()) {
-            return; // 如果 MQTT 客户端未连接，则不发布
-        }
-
-        // 获取 MQTT Topic
-        String mqttTopic = getMqttTopic();
-
-        // 构建 JSON 消息
+        // 获取所有开关状态
         JSONObject json = new JSONObject();
         try {
             Switch switch1 = (Switch) switchContainer.findViewById(R.id.switch1);
@@ -304,14 +318,32 @@ public class DevicesFragment extends ListFragment {
             return;
         }
 
-        // 发布到 MQTT
-        try {
-            MqttMessage message = new MqttMessage(json.toString().getBytes());
-            message.setQos(0); // 设置 QoS 为 0
-            client.publish(mqttTopic, message);
-        } catch (MqttException e) {
-            e.printStackTrace();
-            Toast.makeText(getActivity(), "MQTT publish failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        // 根据模式选择发送方式
+        if (isBluetoothMode) {
+            // 蓝牙模式 - 发送到蓝牙设备
+            boolean success = BluetoothDataActivity.sendBluetoothData(getActivity(), json.toString());
+            if (!success) {
+                Toast.makeText(getActivity(), "蓝牙发送失败", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // MQTT模式
+            if (client == null || !client.isConnected()) {
+                Toast.makeText(getActivity(), "MQTT未连接", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 获取 MQTT Topic
+            String mqttTopic = getMqttTopic();
+
+            // 发布到 MQTT
+            try {
+                MqttMessage message = new MqttMessage(json.toString().getBytes());
+                message.setQos(0); // 设置 QoS 为 0
+                client.publish(mqttTopic, message);
+            } catch (MqttException e) {
+                e.printStackTrace();
+                Toast.makeText(getActivity(), "MQTT发布失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

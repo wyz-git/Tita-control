@@ -116,6 +116,15 @@ public class BluetoothDeviceListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 检查是否已有连接
+        if (sBluetoothGatt != null && sConnectedDeviceAddress != null) {
+            // 直接跳转到数据页面
+            Intent intent = new Intent(this, BluetoothDataActivity.class);
+            startActivity(intent);
+            finish(); // 结束当前Activity
+            return;
+        }
+    
         setContentView(R.layout.activity_bluetooth_list);
 
         ListView listView = findViewById(R.id.device_list);
@@ -401,7 +410,7 @@ public class BluetoothDeviceListActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        closeGatt();
+        // closeGatt();
         handler.removeCallbacksAndMessages(null);
     }
 }

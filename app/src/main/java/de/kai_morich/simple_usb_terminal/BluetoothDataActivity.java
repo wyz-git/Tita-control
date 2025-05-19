@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.Context;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -44,7 +45,7 @@ public class BluetoothDataActivity extends AppCompatActivity {
             updateConnectionStatus();
 
             printAllServices();
-            
+
         } catch (Exception e) {
             Log.e(TAG, "Activity初始化失败", e);
             Toast.makeText(this, "界面加载失败", Toast.LENGTH_SHORT).show();
@@ -101,7 +102,42 @@ public class BluetoothDataActivity extends AppCompatActivity {
             statusText.setText("未连接到设备");
         }
     }
-    
+
+    /**
+     * 提供给外部调用的发送数据方法
+     * @param context 上下文
+     * @param message 要发送的消息
+     * @return 是否发送成功
+     */
+    public static boolean sendBluetoothData(Context context, String message) {
+        BluetoothGatt gatt = BluetoothDeviceListActivity.getBluetoothGatt();
+        if (gatt == null) {
+            Toast.makeText(context, "蓝牙连接不可用", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        
+        BluetoothGattService service = gatt.getService(SERVICE_UUID);
+        if (service == null) {
+            Toast.makeText(context, "找不到蓝牙服务", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_UUID);
+        if (characteristic == null) {
+            Toast.makeText(context, "找不到数据特征", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        
+        characteristic.setValue(message.getBytes());
+        boolean success = gatt.writeCharacteristic(characteristic);
+        if (success) {
+            Toast.makeText(context, "数据已发送", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(context, "发送失败", Toast.LENGTH_SHORT).show();
+        }
+        return success;
+    }
+
     private void sendData(String message) {
         BluetoothGatt gatt = BluetoothDeviceListActivity.getBluetoothGatt();
         if (gatt == null) {
