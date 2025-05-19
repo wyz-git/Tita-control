@@ -543,6 +543,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         status("connected");
         connected = Connected.True;
         controlLines.start();
+        Intent intent = new Intent(getActivity(), ImageActivity.class);
+        startActivity(intent);
     }
 
     @Override
