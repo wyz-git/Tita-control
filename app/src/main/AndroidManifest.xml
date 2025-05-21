@@ -67,6 +67,12 @@
             android:screenOrientation="portrait" 
             android:exported="false"/>  <!-- 不需要外部调用时设为false -->
 
+        <activity
+            android:name=".BluetoothJoystickActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:screenOrientation="portrait" 
+            android:exported="false"/> 
+
         <activity 
             android:name=".BluetoothDeviceListActivity"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"

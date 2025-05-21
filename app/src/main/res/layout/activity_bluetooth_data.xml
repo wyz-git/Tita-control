@@ -32,4 +32,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="断开连接"/>
+
+    <EditText
+        android:id="@+id/srt_url_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入SRT流地址"
+        android:text=""/>
+
+    <Button
+        android:id="@+id/joystick_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="进入摇杆控制"
+        android:layout_below="@id/disconnect_button"
+        android:layout_marginTop="16dp"/>
 </LinearLayout>

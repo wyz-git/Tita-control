@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -22,7 +23,7 @@ public class BluetoothDataActivity extends AppCompatActivity {
 
     private static final UUID CHARACTERISTIC_UUID = UUID.fromString("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
 
-    
+    private Button joystickButton; 
     private TextView statusText;
     private EditText inputText;
     private Button sendButton;
@@ -73,9 +74,10 @@ public class BluetoothDataActivity extends AppCompatActivity {
         inputText = findViewById(R.id.input_text);
         sendButton = findViewById(R.id.send_button);
         disconnectButton = findViewById(R.id.disconnect_button);
-        
+        joystickButton = findViewById(R.id.joystick_button);
         if (statusText == null || inputText == null || 
-            sendButton == null || disconnectButton == null) {
+            sendButton == null || disconnectButton == null ||
+            joystickButton == null) { // 检查新按钮
             throw new RuntimeException("必要的视图未找到");
         }
     }
@@ -91,6 +93,27 @@ public class BluetoothDataActivity extends AppCompatActivity {
         disconnectButton.setOnClickListener(v -> {
             disconnectDevice();
             finish();
+        });
+        joystickButton.setOnClickListener(v -> {
+            // 检查蓝牙连接状态
+            if (BluetoothDeviceListActivity.getBluetoothGatt() == null) {
+                Toast.makeText(this, "请先连接蓝牙设备", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // 获取输入的SRT URL
+            EditText srtUrlInput = findViewById(R.id.srt_url_input);
+            String srtUrl = srtUrlInput.getText().toString().trim();
+            
+            // 如果没有输入则使用默认值
+            if (srtUrl.isEmpty()) {
+                srtUrl = "srt://";
+            }
+            
+            // 跳转到摇杆控制页面并传递SRT URL
+            Intent intent = new Intent(this, BluetoothJoystickActivity.class);
+            intent.putExtra("SRT_URL", srtUrl);
+            startActivity(intent);
         });
     }
     
