@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.media3.ui.PlayerView;
 
+import android.net.Uri;
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.widget.Toast;
@@ -73,9 +74,10 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
         // 从Intent中获取SRT URL，如果没有则使用默认值
         String srtUrl = getIntent().getStringExtra("SRT_URL");
         if (srtUrl == null || srtUrl.isEmpty()) {
-            srtUrl = "srt://119.23.220.15:8890?streamid=read:live";
+            srtUrl = "srt://";
         }
-        playerViewModel.setMediaItem(srtUrl);
+        Uri srtUri = Uri.parse(srtUrl);
+        playerViewModel.playStream(srtUri);
     }
 
     private void setupButtonListeners() {

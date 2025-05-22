@@ -188,6 +188,8 @@ public class BluetoothDeviceListActivity extends AppCompatActivity {
         if (!bluetoothAdapter.isEnabled()) {
             startActivityForResult(new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT);
         } else {
+            // 先加载已配对设备
+            loadPairedDevices();
             checkPermissionsAndStartScan();
         }
     }
@@ -233,9 +235,29 @@ public class BluetoothDeviceListActivity extends AppCompatActivity {
         return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private void loadPairedDevices() {
+        // 获取已配对设备
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+        
+        if (pairedDevices.isEmpty()) {
+            return;
+        }
+
+        for (BluetoothDevice device : pairedDevices) {
+            String deviceName = device.getName() != null ? device.getName() : "Unknown";
+            String address = device.getAddress();
+            String displayText = String.format("%s\n%s\n(已配对)", deviceName, address);
+            
+            // 添加到已发现设备集合
+            discoveredDevices.add(address);
+            // 添加到列表顶部
+            deviceListAdapter.insert(displayText, 0);
+        }
+    }
+
     private void startBleScan() {
         try {
-            deviceListAdapter.clear();
+            // 不清除列表，保留已加载的配对设备
             discoveredDevices.clear();
             isScanning = true;
 
@@ -271,17 +293,30 @@ public class BluetoothDeviceListActivity extends AppCompatActivity {
             BluetoothDevice device = result.getDevice();
             String address = device.getAddress();
             
-            if (!isValidAddress(address) || discoveredDevices.contains(address)) return;
+            // 跳过无效地址或已存在的设备
+            if (!isValidAddress(address) || discoveredDevices.contains(address)) {
+                return;
+            }
 
             String deviceName = device.getName() != null ? device.getName() : "Unknown";
             String rssi = "RSSI: " + result.getRssi() + " dBm";
             String services = parseServiceInfo(result);
             
-            String displayText = String.format("%s\n%s\n%s | %s", 
-                    deviceName, address, rssi, services);
+            // 检查是否是已配对设备
+            boolean isPaired = device.getBondState() == BluetoothDevice.BOND_BONDED;
+            String status = isPaired ? "(已配对)" : "";
+            
+            String displayText = String.format("%s\n%s\n%s | %s %s", 
+                    deviceName, address, rssi, services, status);
 
             discoveredDevices.add(address);
-            deviceListAdapter.add(displayText);
+            
+            // 如果是已配对设备，添加到列表顶部，否则添加到列表底部
+            if (isPaired) {
+                deviceListAdapter.insert(displayText, 0);
+            } else {
+                deviceListAdapter.add(displayText);
+            }
         });
     }
 

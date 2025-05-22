@@ -11,6 +11,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DataSpec;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.ProgressiveMediaSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
 import io.github.thibaultbee.srtdroid.core.enums.SockOpt;
 import io.github.thibaultbee.srtdroid.core.enums.Transtype;
 import io.github.thibaultbee.srtdroid.core.models.SrtSocket;
@@ -22,8 +23,6 @@ import java.util.Queue;
 import android.util.Log;
 import android.content.Context;
 import android.content.SharedPreferences;
-
-
 import androidx.media3.exoplayer.DefaultLivePlaybackSpeedControl;
 import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.SeekParameters;
@@ -73,6 +72,128 @@ public class PlayerViewModel extends AndroidViewModel {
 
     public ExoPlayer getPlayer() {
         return exoPlayer;
+    }
+
+    public void playHttpStream(String httpUrl) {
+        // 使用ExoPlayer内置的HTTP数据源
+        ProgressiveMediaSource.Factory factory = 
+            new ProgressiveMediaSource.Factory(
+                new DefaultHttpDataSource.Factory()
+                    .setAllowCrossProtocolRedirects(true)
+            );
+        
+        exoPlayer.setMediaSource(factory.createMediaSource(MediaItem.fromUri(Uri.parse(httpUrl))));
+        exoPlayer.prepare();
+    }
+
+    public void playStream(Uri uri) {
+
+        // 解析自定义SRT URI
+        if ("srt".equals(uri.getScheme())) {
+            String host = uri.getHost();
+            int port = uri.getPort();
+            String streamId = uri.getQueryParameter("streamid");
+            
+            if (host != null && port != -1) {
+                playCustomSrtStream(host, port, streamId != null ? streamId : getStreamId());
+                return;
+            }
+        }
+        
+        // 其他URI处理（如http/https）
+        playHttpStream(uri.toString());
+    }
+
+    /**
+     * 自定义SRT流播放（新增内部方法）
+     */
+    private void playCustomSrtStream(String host, int port, String streamId) {
+        ProgressiveMediaSource.Factory factory = 
+            new ProgressiveMediaSource.Factory(new CustomSrtDataSourceFactory(host, port, streamId));
+        exoPlayer.setMediaSource(factory.createMediaSource(MediaItem.fromUri(Uri.EMPTY)));
+        exoPlayer.prepare();
+    }
+
+    // 自定义SRT数据源工厂（新增内部类）
+    private static class CustomSrtDataSourceFactory implements DataSource.Factory {
+        private final String host;
+        private final int port;
+        private final String streamId;
+
+        CustomSrtDataSourceFactory(String host, int port, String streamId) {
+            this.host = host;
+            this.port = port;
+            this.streamId = streamId;
+        }
+
+        @Override
+        public DataSource createDataSource() {
+            return new CustomSrtDataSource(host, port, streamId);
+        }
+    }
+
+    private static class CustomSrtDataSource extends BaseDataSource {
+        private final String host;
+        private final int port;
+        private final String streamId;
+        private SrtSocket srtSocket;
+        private Queue<Byte> byteQueue = new LinkedList<>();
+
+        CustomSrtDataSource(String host, int port, String streamId) {
+            super(true); // true表示是streaming数据源
+            this.host = host;
+            this.port = port;
+            this.streamId = streamId;
+        }
+
+        @Override
+        public long open(DataSpec dataSpec) throws IOException {
+            try {
+                srtSocket = new SrtSocket();
+                srtSocket.setSockFlag(SockOpt.TRANSTYPE, Transtype.LIVE);
+                srtSocket.setSockFlag(SockOpt.PAYLOADSIZE, PAYLOAD_SIZE);
+                srtSocket.setSockFlag(SockOpt.STREAMID, streamId);
+                srtSocket.setSockFlag(SockOpt.RCVLATENCY, 0);
+                srtSocket.connect(host, port);
+                return C.LENGTH_UNSET;
+            } catch (Exception e) {
+                throw new IOException("SRT连接失败: " + e.getMessage());
+            }
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            if (length == 0) return 0;
+            
+            byte[] receivedData = srtSocket.recv(PAYLOAD_SIZE);
+            for (byte b : receivedData) {
+                byteQueue.add(b);
+            }
+
+            int bytesRead = 0;
+            while (bytesRead < length && !byteQueue.isEmpty()) {
+                buffer[offset + bytesRead] = byteQueue.poll();
+                bytesRead++;
+            }
+            return bytesRead;
+        }
+
+        @Override
+        public Uri getUri() {
+            return Uri.parse("srt://" + host + ":" + port);
+        }
+
+        @Override
+        public void close() {
+            try {
+                if (srtSocket != null) {
+                    srtSocket.close();
+                }
+            } catch (Exception e) {
+                Log.e("SRT", "关闭SRT连接错误: " + e.getMessage());
+            }
+            byteQueue.clear();
+        }
     }
 
     public void setMediaItem(String srtUrl) {
