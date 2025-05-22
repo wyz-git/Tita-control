@@ -16,6 +16,21 @@ import android.content.SharedPreferences;
 import android.content.Context;
 import android.widget.Toast;
 import android.widget.EditText;
+import java.util.*; // 导入 java.util 下所有类
+import android.widget.ProgressBar;  // 添加这一行
+// 在现有导入区域添加
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference; // 如果使用AtomicReference也需要这个
+// 在现有导入区域添加
+import java.net.NetworkInterface;
+import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.net.SocketException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.io.IOException;
  
 public class BluetoothJoystickActivity extends AppCompatActivity {
  
@@ -67,23 +82,125 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
         urlEditText = findViewById(R.id.url_edit_text);
     }
  
+    // private void initWebView() {
+    //     // 启用JavaScript（如果需要）
+    //     webView.getSettings().setJavaScriptEnabled(true);
+ 
+    //     // 设置WebViewClient以处理页面加载
+    //     webView.setWebViewClient(new WebViewClient());
+ 
+    //     // 从Intent中获取初始URL，如果没有则使用默认值
+    //     String initialUrl = getIntent().getStringExtra("INITIAL_URL");
+    //     if (initialUrl == null || initialUrl.isEmpty()) {
+    //         initialUrl = "https://www.example.com";
+    //     }
+ 
+    //     // 加载初始URL
+    //     webView.loadUrl(initialUrl);
+    // }
+ 
+
     private void initWebView() {
-        // 启用JavaScript（如果需要）
+        // 显示扫描进度提示
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.VISIBLE);
         webView.getSettings().setJavaScriptEnabled(true);
- 
-        // 设置WebViewClient以处理页面加载
         webView.setWebViewClient(new WebViewClient());
- 
-        // 从Intent中获取初始URL，如果没有则使用默认值
-        String initialUrl = getIntent().getStringExtra("INITIAL_URL");
-        if (initialUrl == null || initialUrl.isEmpty()) {
-            initialUrl = "https://www.example.com";
-        }
- 
-        // 加载初始URL
-        webView.loadUrl(initialUrl);
+        // 在后台线程执行网络扫描
+        new Thread(() -> {
+            Log.d("NetworkScan", "开始网络扫描...");
+            String targetIP = scanNetwork(8889);
+            Log.d("NetworkScan", "网络扫描完成。目标IP: " + (targetIP != null ? targetIP : "null"));
+
+            runOnUiThread(() -> {
+                progressBar.setVisibility(View.GONE);
+                if (targetIP != null) {
+                    Log.d("NetworkScan", "在IP地址找到设备: " + targetIP);
+                    webView.loadUrl("http://" + targetIP + ":8889/tita");
+                } else {
+                    // 处理未找到设备的情况
+                    Log.e("NetworkScan", "未找到目标设备");
+                    Toast.makeText(BluetoothJoystickActivity.this, "未找到目标设备", Toast.LENGTH_SHORT).show();
+                    webView.loadUrl("about:blank");
+                }
+            });
+        }).start();
     }
- 
+
+    private String scanNetwork(int targetPort) {
+        // 获取本机IP地址
+        String localIP = getLocalIPAddress();
+        if (localIP == null) return null;
+
+        // 生成待扫描的IP列表（示例：192.168.1.1 - 192.168.1.254）
+        List<String> ipList = generateIPRange(localIP);
+
+        // 使用多线程加速扫描
+        ExecutorService executor = Executors.newFixedThreadPool(20);
+        AtomicReference<String> foundIP = new AtomicReference<>();
+
+        for (String ip : ipList) {
+            executor.execute(() -> {
+                if (foundIP.get() == null && isPortOpen(ip, targetPort)) {
+                    foundIP.set(ip);
+                    executor.shutdownNow(); // 发现后立即停止扫描
+                }
+            });
+        }
+
+        try {
+            executor.awaitTermination(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return foundIP.get();
+    }
+
+    // 获取本机IPv4地址
+    private String getLocalIPAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) continue;
+
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+                    if (address instanceof Inet4Address) {
+                        return address.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // 生成IP地址范围（简化版，假设子网掩码为24位）
+    private List<String> generateIPRange(String localIP) {
+        List<String> ipList = new ArrayList<>();
+        String[] octets = localIP.split("\\.");
+        if (octets.length != 4) return ipList;
+
+        // 生成最后一位从1到254的IP地址
+        for (int i = 1; i <= 254; i++) {
+            ipList.add(octets[0] + "." + octets[1] + "." + octets[2] + "." + i);
+        }
+        return ipList;
+    }
+
+    // 检测指定端口是否开放
+    private boolean isPortOpen(String ip, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(ip, port), 300); // 300ms超时
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     private void setupButtonListeners() {
         // 左侧按钮组
         btnSwitch1.setOnClickListener(v -> toggleButtonState(btnSwitch1, true));

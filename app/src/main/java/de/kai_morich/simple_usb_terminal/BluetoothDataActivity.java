@@ -154,9 +154,9 @@ public class BluetoothDataActivity extends AppCompatActivity {
         characteristic.setValue(message.getBytes());
         boolean success = gatt.writeCharacteristic(characteristic);
         if (success) {
-            Toast.makeText(context, "数据已发送", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(context, "数据已发送", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(context, "发送失败", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(context, "发送失败", Toast.LENGTH_SHORT).show();
         }
         return success;
     }
@@ -182,9 +182,9 @@ public class BluetoothDataActivity extends AppCompatActivity {
         
         characteristic.setValue(message.getBytes());
         if (gatt.writeCharacteristic(characteristic)) {
-            Toast.makeText(this, "数据已发送", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this, "数据已发送", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "发送失败", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(this, "发送失败", Toast.LENGTH_SHORT).show();
         }
     }
     
