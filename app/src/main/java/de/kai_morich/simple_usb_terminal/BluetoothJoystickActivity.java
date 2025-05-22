@@ -1,28 +1,31 @@
 package de.kai_morich.simple_usb_terminal;
-
+ 
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.content.pm.ActivityInfo;
 import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.media3.ui.PlayerView;
-
-import android.net.Uri;
+ 
 import android.content.SharedPreferences;
 import android.content.Context;
 import android.widget.Toast;
-
+import android.widget.EditText;
+ 
 public class BluetoothJoystickActivity extends AppCompatActivity {
-
+ 
     // 控件声明
     private JoystickView leftJoystick;
     private JoystickView rightJoystick;
     private Button btnSwitch1, btnSwitch2, btnSwitch3, btnSwitch4;
-    
+    private WebView webView;
+    private EditText urlEditText;
+ 
     // 状态变量
     private boolean btn1State = false;
     private int btn2State = 2;
@@ -31,32 +34,28 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
     
     private Handler handler = new Handler();
     private Runnable dataUpdateRunnable;
-
-    // 播放器相关
-    private PlayerView playerView;
-    private PlayerViewModel playerViewModel;
-
+ 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+ 
         // 全屏设置
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
-        setContentView(R.layout.activity_fullscreen_hello);
+ 
+        setContentView(R.layout.bluetooth_joystick_activity);
         
         // 初始化控件
         initViews();
         
-        // 播放器初始化
-        initPlayer();
-
+        // 初始化WebView
+        initWebView();
+ 
         setupButtonListeners();
         initDataLogger();
     }
-
+ 
     private void initViews() {
         leftJoystick = findViewById(R.id.left_joystick);
         rightJoystick = findViewById(R.id.right_joystick);
@@ -64,22 +63,27 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
         btnSwitch2 = findViewById(R.id.btn_switch2);
         btnSwitch3 = findViewById(R.id.btn_switch3);
         btnSwitch4 = findViewById(R.id.btn_switch4);
+        webView = findViewById(R.id.web_view);
+        urlEditText = findViewById(R.id.url_edit_text);
     }
-
-    private void initPlayer() {
-        playerViewModel = new ViewModelProvider(this).get(PlayerViewModel.class);
-        playerView = findViewById(R.id.player_view);
-        playerView.setPlayer(playerViewModel.getPlayer());
-    
-        // 从Intent中获取SRT URL，如果没有则使用默认值
-        String srtUrl = getIntent().getStringExtra("SRT_URL");
-        if (srtUrl == null || srtUrl.isEmpty()) {
-            srtUrl = "srt://";
+ 
+    private void initWebView() {
+        // 启用JavaScript（如果需要）
+        webView.getSettings().setJavaScriptEnabled(true);
+ 
+        // 设置WebViewClient以处理页面加载
+        webView.setWebViewClient(new WebViewClient());
+ 
+        // 从Intent中获取初始URL，如果没有则使用默认值
+        String initialUrl = getIntent().getStringExtra("INITIAL_URL");
+        if (initialUrl == null || initialUrl.isEmpty()) {
+            initialUrl = "https://www.example.com";
         }
-        Uri srtUri = Uri.parse(srtUrl);
-        playerViewModel.playStream(srtUri);
+ 
+        // 加载初始URL
+        webView.loadUrl(initialUrl);
     }
-
+ 
     private void setupButtonListeners() {
         // 左侧按钮组
         btnSwitch1.setOnClickListener(v -> toggleButtonState(btnSwitch1, true));
@@ -88,6 +92,17 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
         // 右侧按钮组
         btnSwitch3.setOnClickListener(v -> toggleButtonState(btnSwitch3, false));
         btnSwitch4.setOnClickListener(v -> cycleButtonState(btnSwitch4, false));
+ 
+        // 设置一个按钮用于加载URL
+        Button loadUrlButton = findViewById(R.id.btn_load_url);
+        loadUrlButton.setOnClickListener(v -> {
+            String url = urlEditText.getText().toString();
+            if (!url.isEmpty()) {
+                webView.loadUrl(url);
+            } else {
+                Toast.makeText(BluetoothJoystickActivity.this, "Please enter a URL", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     // 二态按钮切换
@@ -174,27 +189,25 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         handler.post(dataUpdateRunnable);
-        playerViewModel.getPlayer().play();
         // 恢复按钮状态
         updateButtonAppearance(btnSwitch1, btn1State);
         updateButtonAppearance(btnSwitch2, btn2State);
         updateButtonAppearance(btnSwitch3, btn3State);
         updateButtonAppearance(btnSwitch4, btn4State);
     }
-
+ 
     @Override
     protected void onPause() {
         super.onPause();
         handler.removeCallbacks(dataUpdateRunnable);
-        playerViewModel.getPlayer().pause();
     }
-
+ 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
     }
-
+ 
     // 全屏控制
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -203,7 +216,7 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
             hideSystemUI();
         }
     }
-
+ 
     private void hideSystemUI() {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY

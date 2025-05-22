@@ -1,0 +1,141 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- 第1层：全屏WebView（保持原透明度） -->
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"/>
+
+    <!-- 第2层：顶部控制栏（保持原透明度） -->
+    <LinearLayout
+        android:id="@+id/top_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- 左侧按钮组（仅调整按钮透明度） -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btn_switch1"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:alpha="0.6"
+                android:background="@drawable/btn_transparent_bg"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"/>
+
+            <Button
+                android:id="@+id/btn_switch2"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:alpha="0.6"
+                android:background="@drawable/btn_transparent_bg"
+                android:layout_marginTop="8dp"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"/>
+        </LinearLayout>
+
+        <!-- URL输入区（保持原设置） -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <EditText
+                android:id="@+id/url_edit_text"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/edittext_bg"
+                android:hint="https://example.com"
+                android:paddingHorizontal="8dp"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"/>
+
+            <Button
+                android:id="@+id/btn_load_url"
+                android:layout_width="80dp"
+                android:layout_height="40dp"
+                android:alpha="0.7"
+                android:background="@drawable/btn_transparent_bg"
+                android:text="GO"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <!-- 右侧按钮组（仅调整按钮透明度） -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btn_switch3"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:alpha="0.6"
+                android:background="@drawable/btn_transparent_bg"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"/>
+
+            <Button
+                android:id="@+id/btn_switch4"
+                android:layout_width="60dp"
+                android:layout_height="40dp"
+                android:alpha="0.6"
+                android:background="@drawable/btn_transparent_bg"
+                android:layout_marginTop="8dp"
+                android:text="0"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 第3层：底部控制栏（调整摇杆透明度） -->
+    <LinearLayout
+        android:id="@+id/bottom_controls"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <de.kai_morich.simple_usb_terminal.JoystickView
+            android:id="@+id/left_joystick"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:alpha="0.5"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <de.kai_morich.simple_usb_terminal.JoystickView
+            android:id="@+id/right_joystick"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:alpha="0.5"/>
+    </LinearLayout>
+</RelativeLayout>
