@@ -39,8 +39,7 @@
                 android:id="@+id/btn_switch1"
                 android:layout_width="60dp"
                 android:layout_height="40dp"
-                android:alpha="0.6"
-                android:background="@drawable/btn_transparent_bg"
+                android:alpha="1"
                 android:text="0"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"/>
@@ -49,8 +48,7 @@
                 android:id="@+id/btn_switch2"
                 android:layout_width="60dp"
                 android:layout_height="40dp"
-                android:alpha="0.6"
-                android:background="@drawable/btn_transparent_bg"
+                android:alpha="1"
                 android:layout_marginTop="8dp"
                 android:text="0"
                 android:textColor="#FFFFFF"
@@ -100,7 +98,7 @@
                 android:id="@+id/btn_switch3"
                 android:layout_width="60dp"
                 android:layout_height="40dp"
-                android:alpha="0.6"
+                android:alpha="1"
                 android:background="@drawable/btn_transparent_bg"
                 android:text="0"
                 android:textColor="#FFFFFF"
@@ -110,7 +108,7 @@
                 android:id="@+id/btn_switch4"
                 android:layout_width="60dp"
                 android:layout_height="40dp"
-                android:alpha="0.6"
+                android:alpha="1"
                 android:background="@drawable/btn_transparent_bg"
                 android:layout_marginTop="8dp"
                 android:text="0"
@@ -132,7 +130,7 @@
             android:id="@+id/left_joystick"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:alpha="0.2"/>
+            android:alpha="1"/>
 
         <Space
             android:layout_width="0dp"
@@ -143,6 +141,6 @@
             android:id="@+id/right_joystick"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:alpha="0.2"/>
+            android:alpha="1"/>
     </LinearLayout>
 </RelativeLayout>

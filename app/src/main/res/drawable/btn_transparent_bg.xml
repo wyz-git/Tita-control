@@ -1,24 +1,17 @@
-<!-- res/drawable/btn_selector.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 按下状态 -->
-    <item android:state_pressed="true">
+    <item android:state_checked="true">
         <shape android:shape="rectangle">
-            <solid android:color="#40FFFFFF"/> <!-- 半透明白色 -->
+            <solid android:color="#3A7BD5"/>
             <corners android:radius="18dp"/>
-            <stroke 
-                android:width="1dp" 
-                android:color="#80FFFFFF"/> <!-- 半透明白边框 -->
+            <stroke android:width="1dp" android:color="#E0E0E0"/>
         </shape>
     </item>
-    
-    <!-- 默认状态 -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#00000000"/> <!-- 完全透明 -->
+            <solid android:color="#FF5252"/>
             <corners android:radius="18dp"/>
-            <stroke 
-                android:width="1dp" 
-                android:color="#80FFFFFF"/> <!-- 半透明白边框 -->
+            <stroke android:width="1dp" android:color="#4285F4"/>
         </shape>
     </item>
 </selector>

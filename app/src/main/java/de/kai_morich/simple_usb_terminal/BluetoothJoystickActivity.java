@@ -253,16 +253,16 @@ public class BluetoothJoystickActivity extends AppCompatActivity {
             btn.setText(String.valueOf(value));
             int color;
             switch (value) {
-                case 1: color = 0xFF2196F3; break;
+                case 1: color = 0xFF4CAF50; break;
                 case 2: color = 0xFFFF9800; break;
-                default: color = 0xFF9E9E9E; break;
+                default: color = 0xFF2196F3; break;
             }
             btn.setBackgroundColor(color);
         } else {
             // 处理二态按钮
             boolean boolState = (boolean) state;
             btn.setText(boolState ? "1" : "0");
-            btn.setBackgroundColor(boolState ? 0xFF4CAF50 : 0xFF9E9E9E);
+            btn.setBackgroundColor(boolState ? 0xFF4CAF50 : 0xFF2196F3);
         }
     }
 
